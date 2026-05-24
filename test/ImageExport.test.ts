@@ -4,6 +4,7 @@ import {
 	validateFilename,
 	exportCanvasToPNG,
 	exportCanvasToSVG,
+	tintCanvasImage,
 	blobToArrayBuffer,
 	getFileExtension,
 } from "../Services/ImageExport";
@@ -196,6 +197,64 @@ describe("ImageExport", () => {
 		expect(text).toContain('width="200"');
 		expect(text).toContain('height="150"');
 	});
+	});
+
+	describe("tintCanvasImage", () => {
+		let canvas: HTMLCanvasElement;
+
+		beforeEach(() => {
+			canvas = document.createElement("canvas");
+			canvas.width = 2;
+			canvas.height = 2;
+		});
+
+		it("should return a canvas with same dimensions", () => {
+			const tinted = tintCanvasImage(canvas, "#ff0000");
+			expect(tinted).toBeInstanceOf(HTMLCanvasElement);
+			expect(tinted.width).toBe(2);
+			expect(tinted.height).toBe(2);
+		});
+
+		it("should not throw for valid hex color", () => {
+			expect(() => tintCanvasImage(canvas, "#0000ff")).not.toThrow();
+		});
+
+		it("should not throw for hex color without hash", () => {
+			expect(() => tintCanvasImage(canvas, "ff0000")).not.toThrow();
+		});
+	});
+
+	describe("tinted SVG export", () => {
+		let canvas: HTMLCanvasElement;
+
+		beforeEach(() => {
+			canvas = document.createElement("canvas");
+			canvas.width = 100;
+			canvas.height = 100;
+			const ctx = canvas.getContext("2d")!;
+			ctx.fillStyle = "black";
+			ctx.fillRect(0, 0, 100, 100);
+		});
+
+		it("should create SVG without tint when no color given", () => {
+			const blob = exportCanvasToSVG(canvas);
+			expect(blob).toBeInstanceOf(Blob);
+			expect(blob.type).toBe("image/svg+xml");
+		});
+
+		it("should create SVG with tint when color is provided", () => {
+			const blob = exportCanvasToSVG(canvas, "#ff0000");
+			expect(blob).toBeInstanceOf(Blob);
+			expect(blob.type).toBe("image/svg+xml");
+		});
+
+		it("should preserve SVG XML structure with tint", async () => {
+			const blob = exportCanvasToSVG(canvas, "#00ff00");
+			const text = await blob.text();
+			expect(text).toContain('<?xml version="1.0"');
+			expect(text).toContain('xmlns="http://www.w3.org/2000/svg"');
+			expect(text).toContain("<image");
+		});
 	});
 
 	describe("blobToArrayBuffer", () => {

@@ -22,6 +22,9 @@ export class ExportModal extends Modal {
 	private extensionDisplay: HTMLElement;
 	private pngRadio: HTMLInputElement;
 	private svgRadio: HTMLInputElement;
+	private svgColorSection: HTMLElement;
+	private svgColorInput: HTMLInputElement;
+	private svgTintColor: string = "";
 
 	constructor(app: App, canvas: HTMLCanvasElement, defaultFolder: string) {
 		super(app);
@@ -37,6 +40,9 @@ export class ExportModal extends Modal {
 		// Format selector
 		this.buildFormatSelector(contentEl);
 
+		// SVG color picker (hidden until SVG is selected)
+		this.buildSvgColorPicker(contentEl);
+
 		// Filename input
 		this.buildFilenameInput(contentEl);
 
@@ -45,6 +51,31 @@ export class ExportModal extends Modal {
 
 		// Action buttons
 		this.buildActionButtons(contentEl);
+	}
+
+	private buildSvgColorPicker(container: HTMLElement): void {
+		this.svgColorSection = container.createDiv("export-svg-color-section");
+		this.svgColorSection.style.display = "none";
+
+		const heading = this.svgColorSection.createEl("h4");
+		heading.textContent = "Image color:";
+
+		const wrapper = this.svgColorSection.createDiv("export-svg-color-wrapper");
+		this.svgColorInput = wrapper.createEl("input", {
+			type: "color",
+			attr: { id: "svg-tint-color" },
+		}) as HTMLInputElement;
+
+		const label = wrapper.createEl("label", {
+			attr: { for: "svg-tint-color" },
+		});
+		this.svgColorInput.value = "#000000";
+		label.textContent = "Black";
+
+		this.svgColorInput.addEventListener("input", () => {
+			this.svgTintColor = this.svgColorInput.value;
+			label.textContent = this.svgColorInput.value;
+		});
 	}
 
 	private buildFormatSelector(container: HTMLElement): void {
@@ -64,6 +95,7 @@ export class ExportModal extends Modal {
 		this.pngRadio.checked = true;
 		this.pngRadio.addEventListener("change", () => {
 			this.selectedFormat = "png";
+			this.svgColorSection.style.display = "none";
 			this.updateExtensionDisplay();
 		});
 
@@ -80,6 +112,7 @@ export class ExportModal extends Modal {
 		});
 		this.svgRadio.addEventListener("change", () => {
 			this.selectedFormat = "svg";
+			this.svgColorSection.style.display = "";
 			this.updateExtensionDisplay();
 		});
 
@@ -174,7 +207,10 @@ export class ExportModal extends Modal {
 			if (this.selectedFormat === "png") {
 				blob = await exportCanvasToPNG(this.canvas);
 			} else {
-				blob = exportCanvasToSVG(this.canvas);
+				blob = exportCanvasToSVG(
+					this.canvas,
+					this.svgTintColor || undefined,
+				);
 			}
 
 				// Save to vault
