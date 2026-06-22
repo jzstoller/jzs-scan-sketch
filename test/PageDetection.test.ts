@@ -53,11 +53,12 @@ describe("detectPageCorners", () => {
 
 		// Each detected corner should be reasonably close to the
 		// expected rectangle corner (allow tolerance for downscale/approx error)
+		// Detection returns [TL, TR, BL, BR]
 		const expected = [
 			{ x: page.x, y: page.y }, // TL
 			{ x: page.x + page.w, y: page.y }, // TR
-			{ x: page.x + page.w, y: page.y + page.h }, // BR
 			{ x: page.x, y: page.y + page.h }, // BL
+			{ x: page.x + page.w, y: page.y + page.h }, // BR
 		];
 
 		const tolerance = 25; // pixels
